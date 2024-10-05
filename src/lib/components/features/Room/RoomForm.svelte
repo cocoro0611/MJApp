@@ -44,7 +44,6 @@
 
   $: isCreate = action === "?/create-room";
   $: isUpdate = action === "?/update-room";
-  $: isDelete = action === "?/delete-room";
 
   const updateRoomName = (event: CustomEvent<string>) => {
     room.name = event.detail;
@@ -57,36 +56,34 @@
 
 <Form {action}>
   <input type="hidden" name="id" value="{room.id}" />
-  {#if !isDelete}
-    {#if isCreate}
-      <FormField name="部屋名">
-        <InputForm
-          name="name"
-          placeholder="部屋名を入力"
-          bind:value="{room.name}"
-          on:input="{updateRoomName}"
-          maxlength="{10}"
-        />
-      </FormField>
-      <FormField name="">
-        <RoomMemberForm {users} />
-      </FormField>
-    {/if}
-    <FormField name="">
-      <RoomSettingForm {room} />
+  {#if isCreate}
+    <FormField name="部屋名">
+      <InputForm
+        name="name"
+        placeholder="部屋名を入力"
+        bind:value="{room.name}"
+        on:input="{updateRoomName}"
+        maxlength="{10}"
+      />
     </FormField>
-    {#if isUpdate}
-      <FormField name="場代">
-        <InputForm
-          type="number"
-          name="gameAmount"
-          placeholder="金額を入力"
-          bind:value="{room.gameAmount}"
-          on:input="{updateGameAmount}"
-        >
-          <span slot="left" class="text-gray-500">¥</span>
-        </InputForm>
-      </FormField>
-    {/if}
+    <FormField name="">
+      <RoomMemberForm {users} />
+    </FormField>
+  {/if}
+  <FormField name="">
+    <RoomSettingForm {room} />
+  </FormField>
+  {#if isUpdate}
+    <FormField name="場代">
+      <InputForm
+        type="number"
+        name="gameAmount"
+        placeholder="金額を入力"
+        bind:value="{room.gameAmount}"
+        on:input="{updateGameAmount}"
+      >
+        <span slot="left" class="text-gray-500">¥</span>
+      </InputForm>
+    </FormField>
   {/if}
 </Form>

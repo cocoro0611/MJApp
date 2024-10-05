@@ -25,6 +25,15 @@
     $currentPage === "roomUserEdit"
       ? users.find((user) => user.id === getLocalData("userId")) || null
       : null;
+
+  $: selectedRoomScore =
+    $currentPage === "roomTie"
+      ? scores.find((score) =>
+          score.userScores.some(
+            (userScore) => userScore.id === getLocalData("scoreId")
+          )
+        ) || null
+      : null;
 </script>
 
 {#if $currentPage === "room"}
@@ -37,7 +46,7 @@
   <RoomUserEdit user="{selectedRoomUser}" />
 {:else if $currentPage === "roomDetail" && selectedRoom}
   <RoomDetail {scores} {chips} room="{selectedRoom}" />
-{:else if $currentPage === "roomTie" && selectedRoom}
+{:else if $currentPage === "roomTie" && selectedRoom && selectedRoomScore}
   <!-- TODO:同順位ページの作成 -->
-  <RoomTie {scores} room="{selectedRoom}" />
+  <RoomTie score="{selectedRoomScore}" room="{selectedRoom}" />
 {/if}

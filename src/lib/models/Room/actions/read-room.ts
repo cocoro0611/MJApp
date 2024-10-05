@@ -20,8 +20,9 @@ export async function readRooms(): Promise<RoomData[]> {
             "User.icon",
             "User.isDefault",
             "RoomUser.roomId",
+            "RoomUser.userOrder",
           ])
-          .orderBy("RoomUser.order", "asc")
+          .orderBy("RoomUser.userOrder", "asc")
           .where("RoomUser.roomId", "in", roomIds)
           .execute()
       : [];
@@ -30,13 +31,14 @@ export async function readRooms(): Promise<RoomData[]> {
     roomIds.length > 0
       ? await db
           .selectFrom("Score")
+          .innerJoin("RoomScore", "Score.id", "RoomScore.scoreId")
           .select([
             "Score.userId",
-            "Score.roomId",
+            "RoomScore.roomId",
             db.fn.sum<number>("score").as("totalScore"),
           ])
-          .where("Score.roomId", "in", roomIds)
-          .groupBy(["Score.userId", "Score.roomId"])
+          .where("RoomScore.roomId", "in", roomIds)
+          .groupBy(["Score.userId", "RoomScore.roomId"])
           .execute()
       : [];
 
@@ -44,19 +46,33 @@ export async function readRooms(): Promise<RoomData[]> {
     roomIds.length > 0
       ? await db
           .selectFrom("Chip")
+          .innerJoin("RoomChip", "Chip.id", "RoomChip.chipId")
           .select([
             "Chip.userId",
-            "Chip.roomId",
+            "RoomChip.roomId",
             db.fn.sum<number>("chip").as("totalChip"),
-            db.fn.max<number>("chipCount").as("chipCount"),
+            db.fn.max<number>("RoomChip.chipOrder").as("chipOrder"),
           ])
-          .where("Chip.roomId", "in", roomIds)
-          .groupBy(["Chip.userId", "Chip.roomId"])
+          .where("RoomChip.roomId", "in", roomIds)
+          .groupBy(["Chip.userId", "RoomChip.roomId"])
           .execute()
       : [];
 
-  return rooms.map(
-    (room): RoomData => ({
+  // Create lookup maps for faster access
+  const userMap = new Map(
+    users.map((user) => [`${user.roomId}-${user.id}`, user])
+  );
+  const scoreMap = new Map(
+    totalScores.map((score) => [`${score.roomId}-${score.userId}`, score])
+  );
+  const chipMap = new Map(
+    totalChips.map((chip) => [`${chip.roomId}-${chip.userId}`, chip])
+  );
+
+  return rooms.map((room): RoomData => {
+    const roomUsers = users.filter((user) => user.roomId === room.id);
+
+    return {
       id: room.id,
       name: room.name,
       initialPoint: room.initialPoint,
@@ -65,33 +81,28 @@ export async function readRooms(): Promise<RoomData[]> {
       scoreRate: room.scoreRate,
       chipRate: room.chipRate,
       gameAmount: room.gameAmount,
-      users: users
-        .filter((user) => user.roomId === room.id)
-        .map((user) => {
-          const userScore = totalScores.find(
-            (score) => score.userId === user.id && score.roomId === room.id
-          );
-          const totalScore = Number(userScore?.totalScore ?? 0);
+      users: roomUsers.map((user) => {
+        const key = `${room.id}-${user.id}`;
+        const userScore = scoreMap.get(key);
+        const userChip = chipMap.get(key);
 
-          const userChip = totalChips.find(
-            (chip) => chip.userId === user.id && chip.roomId === room.id
-          );
-          const totalChip = Number(userChip?.totalChip ?? 0);
-          const chipCount = Number(userChip?.chipCount ?? 0);
+        const totalScore = Number(userScore?.totalScore ?? 0);
+        const totalChip = Number(userChip?.totalChip ?? 0);
+        const chipOrder = Number(userChip?.chipOrder ?? 0);
 
-          return {
-            id: user.id,
-            name: user.name,
-            icon: user.icon,
-            isDefault: user.isDefault,
-            totalScore,
-            totalChip,
-            totalPoint:
-              Number(room.scoreRate) * totalScore +
-              Number(room.chipRate) * (totalChip - 20 * chipCount) -
-              Number(room.gameAmount) / 4,
-          };
-        }),
-    })
-  );
+        return {
+          id: user.id,
+          name: user.name,
+          icon: user.icon,
+          isDefault: user.isDefault,
+          totalScore,
+          totalChip,
+          totalPoint:
+            Number(room.scoreRate) * totalScore +
+            Number(room.chipRate) * (totalChip - 20 * chipOrder) -
+            Number(room.gameAmount) / 4,
+        };
+      }),
+    };
+  });
 }

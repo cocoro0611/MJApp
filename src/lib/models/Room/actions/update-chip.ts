@@ -5,35 +5,43 @@ import dayjs from "dayjs";
 export const updateChip: Action = async ({ request }) => {
   const data = await request.formData();
   const roomId = data.get("roomId");
-  const chipCounts = data.getAll("chipCount[]");
+  const chipOrders = data.getAll("chipOrder[]");
   const ids = data.getAll("id[]");
   const inputs = data.getAll("input[]");
 
-  let currentIndex = 0;
-  for (let i = 0; i < chipCounts.length; i++) {
-    const chipCount = chipCounts[i];
-    const userCount = 4;
+  await db.transaction().execute(async (trx) => {
+    let currentIndex = 0;
+    for (const chipOrder of chipOrders) {
+      const userCount = 4;
 
-    for (let j = 0; j < userCount; j++) {
-      const id = ids[currentIndex];
-      const input = inputs[currentIndex];
+      for (let j = 0; j < userCount; j++) {
+        const id = ids[currentIndex];
+        const input = inputs[currentIndex];
 
-      const updateData = {
-        input: Number(input),
-        chip: Number(input),
-        updatedAt: dayjs().toDate(),
-      };
+        const updateData = {
+          input: input,
+          chip: input,
+          updatedAt: dayjs().toDate(),
+        };
 
-      await db
-        .updateTable("Chip")
-        .set(updateData)
-        .where("id", "=", id)
-        .where("roomId", "=", roomId)
-        .where("chipCount", "=", chipCount)
-        .execute();
+        // Update Chip
+        await trx
+          .updateTable("Chip")
+          .set(updateData)
+          .where("id", "=", id)
+          .execute();
 
-      currentIndex++;
+        // Update RoomChip
+        await trx
+          .updateTable("RoomChip")
+          .set({ chipOrder: chipOrder })
+          .where("roomId", "=", roomId)
+          .where("chipId", "=", id)
+          .execute();
+
+        currentIndex++;
+      }
     }
-  }
+  });
   return { success: true, type: "update-chip" };
 };

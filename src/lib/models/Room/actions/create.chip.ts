@@ -7,13 +7,6 @@ export const createChip: Action = async ({ request }) => {
     const data = await request.formData();
     const roomId = data.get("roomId");
 
-    const maxChipCount = await trx
-      .selectFrom("Chip")
-      .where("roomId", "=", roomId)
-      .select(db.fn.max("chipCount").as("maxChipCount"))
-      .executeTakeFirst();
-    const chipCount = (maxChipCount?.maxChipCount || 0) + 1;
-
     const users = await trx
       .selectFrom("User")
       .innerJoin("RoomUser", "User.id", "RoomUser.userId")
@@ -22,15 +15,27 @@ export const createChip: Action = async ({ request }) => {
       .execute();
     const userIds = users.map((user) => user.id);
 
-    const ChipForm = userIds.map((userId) => ({
+    const chips = userIds.map((userId) => ({
       id: v4(),
       input: 0,
       chip: 0,
-      chipCount,
       userId,
-      roomId,
     }));
-    await trx.insertInto("Chip").values(ChipForm).execute();
+    await trx.insertInto("Chip").values(chips).execute();
+
+    const maxChipOrder = await trx
+      .selectFrom("RoomChip")
+      .where("roomId", "=", roomId)
+      .select(db.fn.max("chipOrder").as("maxChipOrder"))
+      .executeTakeFirst();
+    const newChipOrder = (maxChipOrder?.maxChipOrder || 0) + 1;
+
+    const roomChips = chips.map((chip) => ({
+      roomId,
+      chipId: chip.id,
+      chipOrder: newChipOrder,
+    }));
+    await trx.insertInto("RoomChip").values(roomChips).execute();
   });
   return { success: true, type: "create-chip" };
 };

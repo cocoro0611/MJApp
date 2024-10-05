@@ -3,6 +3,7 @@
   import CountCard from "./CountCard.svelte";
   import InputCard from "./InputCard.svelte";
   import type { RoomData, ScoreData } from "$lib/models/Room/type.js";
+  import { saveLocalData } from "$lib/utils/local-storage.js";
   export let score: ScoreData;
   export let room: RoomData;
 
@@ -20,10 +21,11 @@
 
   function handleScoreClick(scoreId: string) {
     scoreClick(score, scoreId);
+    saveLocalData("scoreId", scoreId);
   }
 </script>
 
-<input type="hidden" name="gameCount[]" value="{score.gameCount}" />
+<input type="hidden" name="scoreOrder[]" value="{score.scoreOrder}" />
 <input type="hidden" name="selectedScoreId" value="{selectedScoreId}" />
 {#each score.userScores as userScore}
   <input type="hidden" name="id[]" value="{userScore.id}" />
@@ -35,11 +37,11 @@
 {/each}
 
 <Grid
-  firstContent="{score.gameCount === 1}"
+  firstContent="{score.scoreOrder === 1}"
   rightContentes="{score.userScores}"
 >
   <svelte:fragment slot="leftContent">
-    <CountCard totalValue="{totalPoint}" count="{score.gameCount}" />
+    <CountCard totalValue="{totalPoint}" count="{score.scoreOrder}" />
   </svelte:fragment>
 
   <svelte:fragment slot="rightContent" let:rightContent="{userScore}">

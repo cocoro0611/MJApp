@@ -22,7 +22,7 @@
   }
 </script>
 
-<input type="hidden" name="chipCount[]" value="{chip.chipCount}" />
+<input type="hidden" name="chipOrder[]" value="{chip.chipOrder}" />
 {#each chip.userChips as userChip}
   <input type="hidden" name="id[]" value="{userChip.id}" />
   <input
@@ -32,12 +32,12 @@
   />
 {/each}
 
-<Grid firstContent="{chip.chipCount === 1}" rightContentes="{chip.userChips}">
+<Grid firstContent="{chip.chipOrder === 1}" rightContentes="{chip.userChips}">
   <svelte:fragment slot="leftContent">
     <CountCard
       inputType="chip"
       totalValue="{totalPoint}"
-      count="{chip.chipCount}"
+      count="{chip.chipOrder}"
     />
   </svelte:fragment>
 

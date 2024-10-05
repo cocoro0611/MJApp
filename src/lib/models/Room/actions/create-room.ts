@@ -32,19 +32,24 @@ export const createRoom: Action = async ({ request }) => {
     const roomUsers = userIds.map((userId, index) => ({
       userId,
       roomId: roomForm.id,
-      order: index + 1,
+      userOrder: index + 1,
     }));
     await trx.insertInto("RoomUser").values(roomUsers).execute();
 
-    const initialScore = userIds.map((userId) => ({
+    const initialScores = userIds.map((userId) => ({
       id: v4(),
       input: 0,
       score: 0,
-      gameCount: 1,
       userId,
-      roomId: roomForm.id,
     }));
-    await trx.insertInto("Score").values(initialScore).execute();
+    await trx.insertInto("Score").values(initialScores).execute();
+
+    const roomScores = initialScores.map((score) => ({
+      roomId: roomForm.id,
+      scoreId: score.id,
+      scoreOrder: 1,
+    }));
+    await trx.insertInto("RoomScore").values(roomScores).execute();
   });
   return { success: true, type: "create-room", roomId: createdRoomId };
 };

@@ -5,10 +5,10 @@ import dayjs from "dayjs";
 export const updateScore: Action = async ({ request }) => {
   const data = await request.formData();
   const roomId = data.get("roomId");
-  const selectedScoreId = data.get("selectedScoreId");
-  const gameCounts = data.getAll("gameCount[]");
+  const scoreOrders = data.getAll("scoreOrder[]");
   const ids = data.getAll("id[]");
   const inputs = data.getAll("input[]");
+  const selectedScoreId = data.get("selectedScoreId");
 
   const room = await db
     .selectFrom("Room")
@@ -27,15 +27,15 @@ export const updateScore: Action = async ({ request }) => {
   const umaList = [umaHigh, umaLow, -umaLow, -umaHigh];
 
   let currentIndex = 0;
-  for (let i = 0; i < gameCounts.length; i++) {
-    const gameCount = gameCounts[i];
+  for (const scoreOrder of scoreOrders) {
     const userCount = 4;
-
     let gameScores = [];
     for (let j = 0; j < userCount; j++) {
       const id = ids[currentIndex];
-      const input = Number(inputs[currentIndex]);
-      const baseScore = Math.round((input - Number(returnPoint) / 100) / 10);
+      const input = inputs[currentIndex];
+      const baseScore = Math.round(
+        (Number(input) - Number(returnPoint) / 100) / 10
+      );
       gameScores.push({ id, input, baseScore });
       currentIndex++;
     }
@@ -53,28 +53,40 @@ export const updateScore: Action = async ({ request }) => {
         return { success: true, type: "tie-score" };
       }
 
-      for (let j = 0; j < userCount; j++) {
-        const { id, input, baseScore } = gameScores[j];
-        let finalScore = baseScore + umaList[j];
+      await db.transaction().execute(async (trx) => {
+        for (let j = 0; j < userCount; j++) {
+          const { id, input, baseScore } = gameScores[j];
+          let finalScore = baseScore + umaList[j];
 
-        if (j === 0) {
-          finalScore += oka;
+          if (j === 0) {
+            finalScore += oka;
+          }
+
+          const updateData = {
+            input: input,
+            score: Math.round(finalScore),
+            updatedAt: dayjs().toDate(),
+          };
+
+          await trx
+            .updateTable("Score")
+            .set(updateData)
+            .where("id", "=", id)
+            .execute();
+
+          // RoomScoreのscoreOrderも更新
+          await trx
+            .updateTable("RoomScore")
+            .set({ scoreOrder: scoreOrder })
+            .where("roomId", "=", roomId)
+            .where("scoreId", "=", id)
+            .execute();
         }
+      });
 
-        const updateData = {
-          input: input,
-          score: Math.round(finalScore),
-          updatedAt: dayjs().toDate(),
-        };
-        await db
-          .updateTable("Score")
-          .set(updateData)
-          .where("id", "=", id)
-          .where("roomId", "=", roomId)
-          .where("gameCount", "=", gameCount)
-          .execute();
-      }
+      break; // 選択されたスコアの更新が完了したらループを抜ける
     }
   }
+
   return { success: true, type: "update-score" };
 };

@@ -12,7 +12,7 @@ export function scoreClick(
   updatedInputValues: Record<string, number>;
 } {
   const activeScoreIndex = filteredScores.findIndex(
-    (s) => s.gameCount === score.gameCount
+    (s) => s.scoreOrder === score.scoreOrder
   );
   let updatedInputValues = { ...inputValues };
   if (!(scoreId in updatedInputValues)) {
@@ -58,7 +58,7 @@ export function chipClick(
   updatedInputValues: Record<string, number>;
 } {
   const activeChipIndex = filteredChips.findIndex(
-    (s) => s.chipCount === chip.chipCount
+    (s) => s.chipOrder === chip.chipOrder
   );
   let updatedInputValues = { ...inputValues };
   if (!(chipId in updatedInputValues)) {

@@ -7,13 +7,6 @@ export const createScore: Action = async ({ request }) => {
     const data = await request.formData();
     const roomId = data.get("roomId");
 
-    const maxGameCount = await trx
-      .selectFrom("Score")
-      .where("roomId", "=", roomId)
-      .select(db.fn.max("gameCount").as("maxGameCount"))
-      .executeTakeFirst();
-    const gameCount = (maxGameCount?.maxGameCount || 1) + 1;
-
     const users = await trx
       .selectFrom("User")
       .innerJoin("RoomUser", "User.id", "RoomUser.userId")
@@ -22,15 +15,27 @@ export const createScore: Action = async ({ request }) => {
       .execute();
     const userIds = users.map((user) => user.id);
 
-    const ScoreForm = userIds.map((userId) => ({
+    const scores = userIds.map((userId) => ({
       id: v4(),
       input: 0,
       score: 0,
-      gameCount,
       userId,
-      roomId,
     }));
-    await trx.insertInto("Score").values(ScoreForm).execute();
+    await trx.insertInto("Score").values(scores).execute();
+
+    const maxScoreOrder = await trx
+      .selectFrom("RoomScore")
+      .where("roomId", "=", roomId)
+      .select(db.fn.max("scoreOrder").as("maxScoreOrder"))
+      .executeTakeFirst();
+    const newScoreOrder = (maxScoreOrder?.maxScoreOrder || 0) + 1;
+
+    const roomScores = scores.map((score) => ({
+      roomId,
+      scoreId: score.id,
+      scoreOrder: newScoreOrder,
+    }));
+    await trx.insertInto("RoomScore").values(roomScores).execute();
   });
   return { success: true, type: "create-score" };
 };

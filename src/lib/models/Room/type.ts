@@ -1,4 +1,4 @@
-import type { Room, Score, RoomUser, Chip } from "../types.js";
+import type { Room, Score, Chip, RoomScore, RoomChip } from "../types.js";
 import type { UserData } from "../Member/type.js";
 
 export interface RoomData
@@ -20,12 +20,10 @@ export interface RoomData
   })[];
 }
 
-export interface ScoreData extends Pick<Score, "roomId" | "gameCount"> {
-  userScores: (Pick<Score, "id" | "input" | "score" | "userId"> &
-    Pick<RoomUser, "order">)[];
+export interface ScoreData extends Pick<RoomScore, "roomId" | "scoreOrder"> {
+  userScores: Pick<Score, "id" | "input" | "score" | "userId">[];
 }
 
-export interface ChipData extends Pick<Chip, "roomId" | "chipCount"> {
-  userChips: (Pick<Chip, "id" | "input" | "chip" | "userId"> &
-    Pick<RoomUser, "order">)[];
+export interface ChipData extends Pick<RoomChip, "roomId" | "chipOrder"> {
+  userChips: Pick<Chip, "id" | "input" | "chip" | "userId">[];
 }

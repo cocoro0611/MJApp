@@ -7,9 +7,7 @@
   import type { RoomData, ScoreData } from "$lib/models/Room/type.js";
 
   export let room: RoomData;
-  export let scores: ScoreData[];
-
-  $: filteredScores = scores.filter((score) => score.roomId === room.id);
+  export let score: ScoreData;
 </script>
 
 <Header>
@@ -21,13 +19,12 @@
 
 <Main
   >順位を選択してください
-  {#each filteredScores as score}
-    {score.roomId}
-    {score.gameCount}
-    {#each score.userScores as userScore}
-      <!-- {userScore.id}
-      {userScore.input}
-      {userScore.score} -->
-    {/each}
+  {score.roomId}
+  {score.scoreOrder}
+  {#each score.userScores as userScore}
+    {userScore.id}
+    {userScore.input}
+    {userScore.score}
+    {userScore.userId}
   {/each}
 </Main>

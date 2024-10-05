@@ -8,11 +8,9 @@ export type Chip = {
     id: string;
     input: number;
     chip: number;
-    chipCount: number;
     createdAt: Generated<Timestamp>;
     updatedAt: Generated<Timestamp>;
     userId: string;
-    roomId: string;
 };
 export type Room = {
     id: string;
@@ -26,21 +24,31 @@ export type Room = {
     createdAt: Generated<Timestamp>;
     updatedAt: Generated<Timestamp>;
 };
-export type RoomUser = {
-    userId: string;
+export type RoomChip = {
     roomId: string;
-    order: number;
+    chipId: string;
+    chipOrder: number;
+    createdAt: Generated<Timestamp>;
+};
+export type RoomScore = {
+    roomId: string;
+    scoreId: string;
+    scoreOrder: number;
+    createdAt: Generated<Timestamp>;
+};
+export type RoomUser = {
+    roomId: string;
+    userId: string;
+    userOrder: number;
     createdAt: Generated<Timestamp>;
 };
 export type Score = {
     id: string;
     input: number;
     score: number;
-    gameCount: number;
     createdAt: Generated<Timestamp>;
     updatedAt: Generated<Timestamp>;
     userId: string;
-    roomId: string;
 };
 export type User = {
     id: string;
@@ -53,6 +61,8 @@ export type User = {
 export type DB = {
     Chip: Chip;
     Room: Room;
+    RoomChip: RoomChip;
+    RoomScore: RoomScore;
     RoomUser: RoomUser;
     Score: Score;
     User: User;

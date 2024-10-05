@@ -2,43 +2,45 @@ import db from "$lib/models/db.js";
 import type { ScoreData } from "../type.js";
 
 export async function readScores(): Promise<ScoreData[]> {
-  const scores = await db
-    .selectFrom("Score")
+  const roomScores = await db
+    .selectFrom("RoomScore")
+    .innerJoin("Score", "RoomScore.scoreId", "Score.id")
     .innerJoin("RoomUser", (join) =>
       join
-        .onRef("Score.roomId", "=", "RoomUser.roomId")
+        .onRef("RoomScore.roomId", "=", "RoomUser.roomId")
         .onRef("Score.userId", "=", "RoomUser.userId")
     )
     .select([
-      "Score.id",
+      "RoomScore.roomId",
+      "RoomScore.scoreOrder",
+      "Score.id as scoreId",
       "Score.input",
       "Score.score",
-      "Score.gameCount",
       "Score.userId",
-      "Score.roomId",
-      "RoomUser.order as order",
+      "RoomUser.userOrder",
     ])
-    .orderBy("Score.gameCount", "asc")
-    .orderBy("RoomUser.order", "asc")
+    .orderBy("RoomUser.userOrder")
+    .orderBy("RoomScore.scoreOrder")
     .execute();
 
   const groupedScores: { [key: string]: ScoreData } = {};
-  scores.forEach((score) => {
-    const key = `${score.roomId}-${score.gameCount}`;
+
+  roomScores.forEach((score) => {
+    const key = `${score.roomId}-${score.scoreOrder}`;
     if (!groupedScores[key]) {
       groupedScores[key] = {
         roomId: score.roomId,
-        gameCount: score.gameCount,
+        scoreOrder: score.scoreOrder,
         userScores: [],
       };
     }
     groupedScores[key].userScores.push({
-      id: score.id,
+      id: score.scoreId,
       input: score.input,
       score: score.score,
-      order: score.order,
       userId: score.userId,
     });
   });
+
   return Object.values(groupedScores);
 }

@@ -19,53 +19,15 @@ model User {
   name      String
   icon      String
   isDefault Boolean
-  scores    Score[]
-  chips     Chip[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @default(now())
+  scores    Score[]
+  chips     Chip[]
   rooms     RoomUser[]
 }
 
-model Score {
-  id        String   @id @default(uuid()) @db.Uuid
-  input     Int
-  score     Int
-  gameCount Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String   @db.Uuid
-  room      Room     @relation(fields: [roomId], references: [id])
-  roomId    String   @db.Uuid
-}
-
-model Chip {
-  id        String   @id @default(uuid()) @db.Uuid
-  input     Int
-  chip      Int
-  chipCount Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String   @db.Uuid
-  room      Room     @relation(fields: [roomId], references: [id])
-  roomId    String   @db.Uuid
-}
-
-model RoomUser {
-  users     User     @relation(fields: [userId], references: [id])
-  rooms     Room     @relation(fields: [roomId], references: [id])
-  userId    String   @db.Uuid
-  roomId    String   @db.Uuid
-  order     Int
-  createdAt DateTime @default(now())
-
-  @@id([userId, roomId])
-  @@unique([userId, roomId])
-}
-
 model Room {
-  id           String     @id @default(uuid()) @db.Uuid
+  id           String      @id @default(uuid()) @db.Uuid
   name         String
   initialPoint Int
   returnPoint  Int
@@ -73,9 +35,67 @@ model Room {
   scoreRate    Int
   chipRate     Int
   gameAmount   Int
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @default(now())
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @default(now())
   users        RoomUser[]
-  scores       Score[]
-  chips        Chip[]
+  scores       RoomScore[]
+  chips        RoomChip[]
+}
+
+model Score {
+  id        String      @id @default(uuid()) @db.Uuid
+  input     Int
+  score     Int
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @default(now())
+  user      User        @relation(fields: [userId], references: [id])
+  userId    String      @db.Uuid
+  rooms     RoomScore[]
+}
+
+model Chip {
+  id        String     @id @default(uuid()) @db.Uuid
+  input     Int
+  chip      Int
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @default(now())
+  user      User       @relation(fields: [userId], references: [id])
+  userId    String     @db.Uuid
+  rooms     RoomChip[]
+}
+
+model RoomUser {
+  rooms     Room     @relation(fields: [roomId], references: [id])
+  users     User     @relation(fields: [userId], references: [id])
+  roomId    String   @db.Uuid
+  userId    String   @db.Uuid
+  userOrder Int
+  createdAt DateTime @default(now())
+
+  @@id([roomId, userId])
+  @@unique([roomId, userId])
+}
+
+model RoomScore {
+  rooms      Room     @relation(fields: [roomId], references: [id])
+  scores     Score    @relation(fields: [scoreId], references: [id])
+  roomId     String   @db.Uuid
+  scoreId    String   @db.Uuid
+  scoreOrder Int
+  createdAt  DateTime @default(now())
+
+  @@id([roomId, scoreId])
+  @@unique([roomId, scoreId])
+}
+
+model RoomChip {
+  rooms     Room     @relation(fields: [roomId], references: [id])
+  chips     Chip     @relation(fields: [chipId], references: [id])
+  roomId    String   @db.Uuid
+  chipId    String   @db.Uuid
+  chipOrder Int
+  createdAt DateTime @default(now())
+
+  @@id([roomId, chipId])
+  @@unique([roomId, chipId])
 }
